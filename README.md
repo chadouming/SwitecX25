@@ -52,31 +52,46 @@ Using the Library
 ```C++
 #include "SwitecX25.h"
 
-// 315 degrees of range = 315x3 steps = 945 steps
-// declare motor1 with 945 steps on pins 4-7
-SwitecX25 motor1(315*3, 4,5,6,7);
+int steps = 945;
 
-// declare motor2 with 945 steps on pins 8-11
-SwitecX25 motor2(315*3, 8,9,10,11);
+SwitecX25 motorRpm(steps, 2,3,4,5);
+SwitecX25 motorSpd(steps, 6,7,8,9);
+SwitecX25 motorFuel(steps, 10,11,12,13);
+
+byte gear, spd, shift, rpm_h, rpm_l, engine;
 
 void setup(void) {
-  Serial.begin(9600);
-  Serial.println("Go!");
+  Serial.begin(115200);
 
   // run both motors against stops to re-zero
-  motor1.zero();   // this is a slow, blocking operation
-  motor2.zero();  
-  motor1.setPosition(427);
-  motor2.setPosition(427);
+  motorRpm.zero();   // this is a slow, blocking operation
+  motorSpd.zero();
+  motorFuel.zero();
 }
 
 void loop(void) {
-  // update motors frequently to allow them to step
-  motor1.update();
-  motor2.update();
+  if(Serial.available())
+    if(Serial.available() > 8)
+      if(Serial.available() == 255)
+      {
+        gear = Serial.parseInt();
+				spd = Serial.parseInt() /300 * steps;
+				rpm_h = Serial.parseInt();
+				rpm_l = Serial.parseInt();
+				fuel = Serial.parseInt() / 100 * steps;
+				shift = Serial.parseInt();
+				engine = Serial.parseInt();
 
-  // do stuff, call motorX.setPosition(step) to 
-  // direct needle to new position.
+				int rpm = (rpm_h << 8) | rpm_l;
+        
+        motorRpm.setPosition(rpm / 7000 * steps);
+        motorSpd.setPosition(spd);
+        motorFuel.setPosition(fuel);
+      }
+      
+  motorRpm.update();
+  motorSpd.update();
+  motorFuel.update();
 }
 
 ```
